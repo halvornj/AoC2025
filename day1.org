@@ -9,6 +9,7 @@ Game plan:
 
 This function will be used to read the input-file, probably for all solutions...
 ** TODO i should figure out how to export this to a folder-level? library
+** TODO i should also defun lt and gt, to help with parentheses highlighting.
 #+BEGIN_SRC elisp
   (defun get-input ()
     "Return a list of lines of a file at ./input."
@@ -22,19 +23,30 @@ This function will be used to read the input-file, probably for all solutions...
 
 ** helper functions
 #+BEGIN_SRC elisp
-  (defun padded-str (str)
-    (if (< (length str) 3)
-	(string (aref str 0) ?0 (aref str 1))
-      str))
+   (defun padded-str (str)
+     (if (< (length str) 3)
+   	(string (aref str 0) ?0 (aref str 1))
+       str))
 
-  (defun get-direction (str)
-    (if (eq (aref str 0) ?L) ;;if the first char is L, return the minus-function. else, return plus-function
-	'- '+))
-  (defun get-clicks (str)
-    (string-to-number (substring (padded-str str) 1 3))) ;; that 3 is going to be a problem for things like L1
+   (defun get-direction (str)
+     (if (eq (aref str 0) ?L) ;;if the first char is L, return the minus-function. else, return plus-function
+   	'- '+))
 
-  (defun n-rotate (start_num str)
-    (funcall (get-direction str) start_num (get_clicks str)))
+   (defun get-clicks (str)
+     (string-to-number (substring (padded-str str) 1 3))) ;; that 3 is going to be a problem for things like L1
+
+   (defun n-rotate (start_num str)
+     (if (eq (aref str 0) ?L)
+         (cond
+          ((= start_num (get-clicks str))
+   	0)
+          ((< (get-clicks str) start_num)
+   	(- start_num (get-clicks str)))
+          (t
+  	 (- 100 (- (get-clicks str) start_num))))
+       ;; else rotate right
+       (mod (+ (get-clicks str) start_num) 100)))
+         
 #+END_SRC
 
 #+RESULTS:
@@ -43,11 +55,14 @@ This function will be used to read the input-file, probably for all solutions...
 *** testing the helpers
 who needs unit tests, when you have interactive evaluation buffers:
 #+BEGIN_SRC elisp
-  (n-rotate 50 "L40")
+    ;; (get-direction "R10")
+    ;; (get-clicks "R15")
+    ;; (get-clicks "L1")
+  (n-rotate 55 "L55")
 #+END_SRC
 
 #+RESULTS:
-: 41
+: 0
 
 ** Beginning the actual solution:
 #+BEGIN_SRC elisp
@@ -55,11 +70,20 @@ who needs unit tests, when you have interactive evaluation buffers:
     (if (null l) score_count
      (count-zero-visits (cdr l)
 			(n-rotate current_num (car l))
-			(if (= (mod 100 (n-rotate current_num (car l)))  0)
+			(if (= (n-rotate current_num (car l)) 0)
 			    (+ score_count 1) score_count))))
 
-  (count-zero-visits (get-input))
+  (count-zero-visits (get-input) 50 0)
 #+END_SRC
 
 #+RESULTS:
-| L68 | L30 | R48 | L5 | R60 | L55 | L1 | L99 | R14 | L82 |
+: 60
+
+The above will not work, because it overruns the base max stack depth (which may be only 500??)
+so we need to increase it. I have a better computer than Stallman did in the 80s, so lets try this:
+#+BEGIN_SRC elisp
+(setq max-lisp-eval-depth 10000)
+#+END_SRC
+
+#+RESULTS:
+: 10000
