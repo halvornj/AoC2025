@@ -24,24 +24,26 @@ This function will be used to read the input-file, probably for all solutions...
 #+BEGIN_SRC elisp
   (defun padded-str (str)
     (if (< (length str) 3)
-        (string (aref str 0) ?0 (aref str 1))
+	(string (aref str 0) ?0 (aref str 1))
       str))
-    
+
   (defun get-direction (str)
     (if (eq (aref str 0) ?L) ;;if the first char is L, return the minus-function. else, return plus-function
-        - +))
+	'- '+))
   (defun get-clicks (str)
-    (string-to-number (substring str 1 3))) ;; that 3 is going to be a problem for things like L1
+    (string-to-number (substring (padded-str str) 1 3))) ;; that 3 is going to be a problem for things like L1
+
+  (defun n-rotate (start_num str)
+    (funcall (get-direction str) start_num (get_clicks str)))
 #+END_SRC
 
 #+RESULTS:
-: get-clicks
+: n-rotate
 
 *** testing the helpers
 who needs unit tests, when you have interactive evaluation buffers:
 #+BEGIN_SRC elisp
-;;  (get-direction "R13")
-  (get-clicks (padded-str "R41"))
+  (n-rotate 50 "L40")
 #+END_SRC
 
 #+RESULTS:
@@ -49,10 +51,14 @@ who needs unit tests, when you have interactive evaluation buffers:
 
 ** Beginning the actual solution:
 #+BEGIN_SRC elisp
-  (defun count-zero-visits (l, current_num, score_count)
-    (cond
-     ((null l) score_count)
-     (
+  (defun count-zero-visits (l current_num score_count)
+    (if (null l) score_count
+     (count-zero-visits (cdr l)
+			(n-rotate current_num (car l))
+			(if (= (mod 100 (n-rotate current_num (car l)))  0)
+			    (+ score_count 1) score_count))))
+
+  (count-zero-visits (get-input))
 #+END_SRC
 
 #+RESULTS:
